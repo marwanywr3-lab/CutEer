@@ -89,6 +89,48 @@ body {
   100% { width: 100%; }
 }
 
+/* ================= طبقة السحب والإفلات الشاملة ================= */
+.global-drop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.88);
+  backdrop-filter: blur(6px);
+  z-index: 8000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  pointer-events: none;
+}
+
+.global-drop-box {
+  border: 3px dashed var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  border-radius: 18px;
+  padding: 48px 36px;
+  text-align: center;
+  color: #fff;
+  max-width: 440px;
+  width: 100%;
+}
+
+.drop-icon-big {
+  font-size: 3.2rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.global-drop-box h3 {
+  font-size: 1.2rem;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.global-drop-box p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 /* ================= التطبيق الرئيسي ================= */
 .app-container {
   display: flex;
@@ -188,7 +230,8 @@ body {
 .btn-mini {
   background: var(--accent);
   color: #000;
-  padding: 3px 9px;
+  border: none;
+  padding: 4px 10px;
   border-radius: 5px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -204,7 +247,7 @@ body {
 .workspace {
   flex: 1;
   display: grid;
-  grid-template-columns: 260px 1fr 300px;
+  grid-template-columns: 270px 1fr 300px;
   gap: 8px;
   padding: 8px;
   min-height: 0;
@@ -238,34 +281,51 @@ body {
   flex: 1;
 }
 
-/* منطقة الاستيراد */
+/* منطقة الاستيراد وزر اختيار الملفات */
 .dropzone {
   border: 2px dashed var(--border);
   border-radius: var(--radius);
-  padding: 28px 14px;
+  padding: 24px 14px;
   text-align: center;
   cursor: pointer;
   transition: 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .dropzone:hover, .dropzone.dragover {
   border-color: var(--accent);
-  background: rgba(56, 189, 248, 0.06);
+  background: rgba(56, 189, 248, 0.08);
 }
 
 .dropzone-icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
+  font-size: 2.2rem;
 }
 
 .dropzone p {
-  font-size: 0.85rem;
-  margin-bottom: 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.dropzone-or {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-select-file {
+  width: 100%;
+  justify-content: center;
+  padding: 9px 14px;
+  margin: 2px 0;
 }
 
 .dropzone small {
   font-size: 0.72rem;
   color: var(--text-muted);
+  margin-top: 4px;
 }
 
 .media-info {
@@ -303,11 +363,16 @@ body {
   justify-content: center;
   overflow: hidden;
   min-height: 200px;
+  padding: 16px;
 }
 
 .empty-preview {
   text-align: center;
   color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 #video-player {

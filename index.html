@@ -19,6 +19,15 @@
     </div>
   </div>
 
+  <!-- طبقة السحب والإفلات الشاملة على مستوى الصفحة -->
+  <div id="global-drop-overlay" class="global-drop-overlay hidden">
+    <div class="global-drop-box">
+      <span class="drop-icon-big">📂</span>
+      <h3>أفلت الفيديو هنا للاستيراد الفوري</h3>
+      <p>يدعم MP4, WebM, MOV</p>
+    </div>
+  </div>
+
   <!-- التطبيق الرئيسي -->
   <div id="app" class="app-container hidden">
     
@@ -30,6 +39,9 @@
       </div>
 
       <div class="topbar-actions">
+        <button class="btn btn-ghost" id="btn-top-import" title="استيراد فيديو من ملفاتك">
+          📂 <span class="hide-sm">استيراد فيديو</span>
+        </button>
         <button class="btn btn-ghost" id="btn-projects" title="المشاريع المحفوظة">
           📁 <span class="hide-sm">مشاريعي</span>
         </button>
@@ -49,19 +61,26 @@
       <aside class="panel panel-media" id="panel-media">
         <div class="panel-header">
           <span>الوسائط (Media)</span>
-          <label for="video-upload" class="btn-mini">+ استيراد</label>
+          <button type="button" class="btn-mini" id="btn-header-import">+ استيراد</button>
           <input type="file" id="video-upload" accept="video/*" hidden />
         </div>
         <div class="panel-body">
           <div class="dropzone" id="dropzone">
             <div class="dropzone-icon">🎬</div>
-            <p>اسحب الفيديو هنا أو اضغط للاستيراد</p>
+            <p>اسحب وأفلت الفيديو هنا</p>
+            <span class="dropzone-or">أو</span>
+            <button type="button" class="btn btn-primary btn-select-file" id="btn-select-file">
+              📂 اختر فيديو من ملفاتك
+            </button>
             <small>MP4, WebM, MOV — المعالجة تتم محلياً على جهازك</small>
           </div>
           <div id="media-info" class="media-info hidden">
             <div class="info-row"><span>الملف:</span> <strong id="meta-name">-</strong></div>
             <div class="info-row"><span>المدة:</span> <strong id="meta-duration">00:00</strong></div>
             <div class="info-row"><span>الأبعاد:</span> <strong id="meta-res">-</strong></div>
+            <button type="button" class="btn btn-ghost full-width" id="btn-replace-video" style="margin-top:6px;">
+              🔄 استبدال الفيديو من ملفاتك
+            </button>
           </div>
         </div>
       </aside>
@@ -75,9 +94,12 @@
         <div class="preview-stage" id="preview-stage">
           <div class="empty-preview" id="empty-preview">
             <span class="brand-text large">cut<span class="brand-e">E</span>er</span>
-            <p>اختر فيديو للبدء بالمونتاج</p>
+            <p>اسحب الفيديو إلى هنا أو اختره من جهازك للبدء</p>
+            <button type="button" class="btn btn-primary" id="btn-preview-import" style="margin-top:14px;">
+              📂 اختيار فيديو من ملفاتك
+            </button>
           </div>
-          <video id="video-player" playsinline muted="false" class="hidden"></video>
+          <video id="video-player" playsinline class="hidden"></video>
           <canvas id="render-canvas" class="hidden"></canvas>
           <div id="overlay-text-preview" class="overlay-text-preview hidden"></div>
         </div>

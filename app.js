@@ -9,9 +9,19 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => splash.remove(), 650);
   }, 1600);
 
-  // عناصر الواجهة
+  // عناصر استيراد الفيديو (زر اختيار الملفات + السحب والإفلات)
   const videoUpload = document.getElementById("video-upload");
   const dropzone = document.getElementById("dropzone");
+  const globalDropOverlay = document.getElementById("global-drop-overlay");
+  const importTriggers = [
+    document.getElementById("btn-select-file"),
+    document.getElementById("btn-header-import"),
+    document.getElementById("btn-top-import"),
+    document.getElementById("btn-preview-import"),
+    document.getElementById("btn-replace-video")
+  ];
+
+  // عناصر المعاينة والتشغيل
   const video = document.getElementById("video-player");
   const emptyPreview = document.getElementById("empty-preview");
   const mediaInfo = document.getElementById("media-info");
@@ -64,7 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
     textPosition: "bottom"
   };
 
-  // تنسيق الوقت
   function formatTime(sec) {
     if (!sec || isNaN(sec)) return "00:00.0";
     const m = Math.floor(sec / 60).toString().padStart(2, "0");
@@ -72,8 +81,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${m}:${s}`;
   }
 
-  // استيراد الفيديو
-  dropzone.addEventListener("click", () => videoUpload.click());
+  // فتح نافذة اختيار الملفات من الجهاز
+  function openFilePicker(e) {
+    if (e) e.stopPropagation();
+    videoUpload.value = "";
+    videoUpload.click();
+  }
+
+  importTriggers.forEach((btn) => {
+    if (btn) btn.addEventListener("click", openFilePicker);
+  });
+
+  dropzone.addEventListener("click", openFilePicker);
+
+  // السحب والإفلات داخل صندوق الوسائط
   dropzone.addEventListener("dragover", (e) => {
     e.preventDefault();
     dropzone.classList.add("dragover");
@@ -85,11 +106,48 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.dataTransfer.files.length) loadVideoFile(e.dataTransfer.files[0]);
   });
 
+  // السحب والإفلات على مستوى الشاشة بالكامل
+  let dragCounter = 0;
+  window.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    if (e.dataTransfer && Array.from(e.dataTransfer.types).includes("Files")) {
+      dragCounter++;
+      globalDropOverlay.classList.remove("hidden");
+    }
+  });
+
+  window.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+
+  window.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      globalDropOverlay.classList.add("hidden");
+    }
+  });
+
+  window.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    globalDropOverlay.classList.add("hidden");
+    if (e.dataTransfer && e.dataTransfer.files.length) {
+      loadVideoFile(e.dataTransfer.files[0]);
+    }
+  });
+
   videoUpload.addEventListener("change", (e) => {
     if (e.target.files.length) loadVideoFile(e.target.files[0]);
   });
 
   function loadVideoFile(file) {
+    if (!file.type.startsWith("video/")) {
+      alert("يرجى اختيار ملف فيديو صالح (مثل MP4 أو WebM أو MOV).");
+      return;
+    }
+
     const url = URL.createObjectURL(file);
     video.src = url;
     video.classList.remove("hidden");
