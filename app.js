@@ -1,5 +1,50 @@
 // cutEer — المحرك الرئيسي للمونتاج في المتصفح
 document.addEventListener("DOMContentLoaded", () => {
+
+  // تسجيل Service Worker وتفعيل تثبيت التطبيق (PWA / Web App)
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
+
+  let deferredPrompt = null;
+  const btnInstallApp = document.getElementById("btn-install-app");
+  const installModal = document.getElementById("install-modal");
+  const closeInstallModal = document.getElementById("close-install-modal");
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (btnInstallApp) btnInstallApp.classList.remove("hidden");
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    if (btnInstallApp) btnInstallApp.classList.add("hidden");
+  });
+
+  if (btnInstallApp) {
+    // إخفاء الزر إذا كان التطبيق مفتوحاً بالفعل كتطبيق مثبت (Standalone)
+    if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
+      btnInstallApp.classList.add("hidden");
+    }
+
+    btnInstallApp.addEventListener("click", async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          deferredPrompt = null;
+        }
+      } else if (installModal) {
+        installModal.classList.remove("hidden");
+      }
+    });
+  }
+
+  if (closeInstallModal && installModal) {
+    closeInstallModal.addEventListener("click", () => installModal.classList.add("hidden"));
+  }
+
   // 1. شاشة الترحيب البيضاء بالشعار
   const splash = document.getElementById("splash-screen");
   const app = document.getElementById("app");
@@ -9,7 +54,11 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => splash.remove(), 650);
   }, 1600);
 
-  // عناصر استيراد الفيديو (زر اختيار الملفات + السحب والإفلات)
+  // أزرار التراجع (سهم يسار للخلف / سهم يمين للأمام)
+  const btnUndo = document.getElementById("btn-undo");
+  const btnRedo = document.getElementById("btn-redo");
+
+  // عناصر استيراد الفيديو
   const videoUpload = document.getElementById("video-upload");
   const dropzone = document.getElementById("dropzone");
   const globalDropOverlay = document.getElementById("global-drop-overlay");
@@ -73,6 +122,110 @@ document.addEventListener("DOMContentLoaded", () => {
     textSize: 32,
     textPosition: "bottom"
   };
+
+  // نظام سجل التعديلات (Undo / Redo Stack)
+  const historyStack = [];
+  let historyIndex = -1;
+  let isApplyingHistory = false;
+
+  function getSnapshot() {
+    return {
+      trimStart: state.trimStart,
+      trimEnd: state.trimEnd,
+      speed: state.speed,
+      brightness: state.brightness,
+      contrast: state.contrast,
+      saturate: state.saturate,
+      text: state.text,
+      textColor: state.textColor,
+      textSize: state.textSize,
+      textPosition: state.textPosition
+    };
+  }
+
+  function updateHistoryButtons() {
+    btnUndo.disabled = historyIndex <= 0;
+    btnRedo.disabled = historyIndex >= historyStack.length - 1;
+  }
+
+  function recordHistory() {
+    if (isApplyingHistory) return;
+    const snap = getSnapshot();
+    const current = historyStack[historyIndex];
+    if (current && JSON.stringify(current) === JSON.stringify(snap)) return;
+
+    historyStack.splice(historyIndex + 1);
+    historyStack.push(snap);
+    if (historyStack.length > 50) {
+      historyStack.shift();
+    } else {
+      historyIndex++;
+    }
+    updateHistoryButtons();
+  }
+
+  function applySnapshot(snap) {
+    if (!snap) return;
+    isApplyingHistory = true;
+    Object.assign(state, snap);
+
+    trimStartInput.value = state.trimStart;
+    trimEndInput.value = state.trimEnd;
+    updateTrimUI();
+
+    speedVal.textContent = `${state.speed}x`;
+    video.playbackRate = state.speed;
+    document.querySelectorAll(".speed-pills .pill").forEach((b) => {
+      b.classList.toggle("active", parseFloat(b.dataset.speed) === state.speed);
+    });
+
+    fBrightness.value = state.brightness;
+    fContrast.value = state.contrast;
+    fSaturate.value = state.saturate;
+    updateFilters();
+
+    textInput.value = state.text;
+    textColor.value = state.textColor;
+    textSize.value = state.textSize;
+    textPosition.value = state.textPosition;
+    updateOverlayText();
+
+    isApplyingHistory = false;
+    updateHistoryButtons();
+  }
+
+  function undo() {
+    if (historyIndex > 0) {
+      historyIndex--;
+      applySnapshot(historyStack[historyIndex]);
+    }
+  }
+
+  function redo() {
+    if (historyIndex < historyStack.length - 1) {
+      historyIndex++;
+      applySnapshot(historyStack[historyIndex]);
+    }
+  }
+
+  btnUndo.addEventListener("click", undo);
+  btnRedo.addEventListener("click", redo);
+
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      if (document.activeElement === textInput) return;
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+      if (document.activeElement === textInput) return;
+      e.preventDefault();
+      redo();
+    }
+  });
+
+  // تسجيل الحالة الأولية
+  recordHistory();
 
   function formatTime(sec) {
     if (!sec || isNaN(sec)) return "00:00.0";
@@ -176,6 +329,10 @@ document.addEventListener("DOMContentLoaded", () => {
       updateTrimUI();
       updateFilters();
       updateOverlayText();
+
+      historyStack.length = 0;
+      historyIndex = -1;
+      recordHistory();
     };
   }
 
@@ -245,6 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (video.src) video.currentTime = state.trimStart;
     updateTrimUI();
   });
+  trimStartInput.addEventListener("change", recordHistory);
 
   trimEndInput.addEventListener("input", () => {
     const val = parseFloat(trimEndInput.value);
@@ -252,6 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
     trimEndInput.value = state.trimEnd;
     updateTrimUI();
   });
+  trimEndInput.addEventListener("change", recordHistory);
 
   // السرعة
   document.querySelectorAll(".speed-pills .pill").forEach((btn) => {
@@ -261,6 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
       state.speed = parseFloat(btn.dataset.speed);
       speedVal.textContent = `${state.speed}x`;
       video.playbackRate = state.speed;
+      recordHistory();
     });
   });
 
@@ -276,9 +436,14 @@ document.addEventListener("DOMContentLoaded", () => {
     video.style.filter = getFilterString();
   }
 
-  fBrightness.addEventListener("input", () => { state.brightness = fBrightness.value; updateFilters(); });
-  fContrast.addEventListener("input", () => { state.contrast = fContrast.value; updateFilters(); });
-  fSaturate.addEventListener("input", () => { state.saturate = fSaturate.value; updateFilters(); });
+  fBrightness.addEventListener("input", () => { state.brightness = Number(fBrightness.value); updateFilters(); });
+  fBrightness.addEventListener("change", recordHistory);
+
+  fContrast.addEventListener("input", () => { state.contrast = Number(fContrast.value); updateFilters(); });
+  fContrast.addEventListener("change", recordHistory);
+
+  fSaturate.addEventListener("input", () => { state.saturate = Number(fSaturate.value); updateFilters(); });
+  fSaturate.addEventListener("change", recordHistory);
 
   document.querySelectorAll(".presets .pill").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -291,6 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
       fContrast.value = state.contrast;
       fSaturate.value = state.saturate;
       updateFilters();
+      recordHistory();
     });
   });
 
@@ -314,7 +480,10 @@ document.addEventListener("DOMContentLoaded", () => {
     overlayPreview.style.bottom = state.textPosition === "bottom" ? "10%" : "auto";
   }
 
-  [textInput, textColor, textSize, textPosition].forEach((el) => el.addEventListener("input", updateOverlayText));
+  [textInput, textColor, textSize, textPosition].forEach((el) => {
+    el.addEventListener("input", updateOverlayText);
+    el.addEventListener("change", recordHistory);
+  });
 
   // أدوات الذكاء الاصطناعي (Client-Side)
   const aiStatus = document.getElementById("ai-status");
@@ -334,6 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
       trimStartInput.value = autoStart;
       trimEndInput.value = autoEnd;
       updateTrimUI();
+      recordHistory();
       showAiStatus(`تم قص الصمت تلقائياً! النطاق الجديد: ${autoStart.toFixed(1)}s إلى ${autoEnd.toFixed(1)}s`);
     }, 800);
   });
@@ -346,6 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fContrast.value = state.contrast;
     fSaturate.value = state.saturate;
     updateFilters();
+    recordHistory();
     showAiStatus("تم تطبيق توازن الألوان السينمائي الذكي ✨");
   });
 
@@ -440,6 +611,7 @@ document.addEventListener("DOMContentLoaded", () => {
     textPosition.value = state.textPosition || "bottom";
     updateFilters();
     updateOverlayText();
+    recordHistory();
     projectsModal.classList.add("hidden");
     alert("تم استعادة إعدادات المشروع! استورد ملف الفيديو لتطبيقها مباشرة.");
   };

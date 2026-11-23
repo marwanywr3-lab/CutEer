@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="cutEer" />
   <title>cutEer — محرر الفيديو الذكي</title>
-  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -39,6 +45,28 @@
       </div>
 
       <div class="topbar-actions">
+        <!-- أزرار التراجع (سهم يسار للخلف / سهم يمين للأمام) -->
+        <div class="history-controls" dir="ltr">
+          <button type="button" class="btn btn-ghost btn-history" id="btn-undo" title="تراجع للخلف (Ctrl+Z)" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5"></path>
+              <path d="M12 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <button type="button" class="btn btn-ghost btn-history" id="btn-redo" title="تراجع للأمام (Ctrl+Y)" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"></path>
+              <path d="M12 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- زر تثبيت التطبيق على الجهاز (Web App / PWA) -->
+        <button type="button" class="btn btn-install" id="btn-install-app" title="تثبيت cutEer كتطبيق على جهازك">
+          <img src="assets/icon-192.png" alt="cutEer" class="install-btn-icon" />
+          <span class="hide-sm">تثبيت التطبيق</span>
+        </button>
+
         <button class="btn btn-ghost" id="btn-top-import" title="استيراد فيديو من ملفاتك">
           📂 <span class="hide-sm">استيراد فيديو</span>
         </button>
@@ -243,6 +271,25 @@
       </div>
       <div class="modal-body" id="projects-list">
         <!-- يتم تعبئتها ديناميكياً -->
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة إرشادات تثبيت التطبيق (في حال لم يظهر التنبيه التلقائي) -->
+  <div id="install-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>تثبيت cutEer كتطبيق على جهازك</h3>
+        <button class="close-modal" id="close-install-modal">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <img src="assets/icon-192.png" alt="cutEer Icon" style="width:76px;height:76px;border-radius:18px;margin:0 auto;border:1px solid var(--border);" />
+        <p style="font-size:0.9rem;line-height:1.6;">يمكنك تثبيت <strong>cutEer</strong> على شاشتك الرئيسية وتشغيله كتطبيق مستقل بدون شريط المتصفح:</p>
+        <div style="background:var(--bg-elevated);padding:12px;border-radius:8px;text-align:right;font-size:0.82rem;line-height:1.7;color:var(--text-muted);">
+          <p><strong style="color:var(--accent);">• على الكمبيوتر (Chrome / Edge):</strong> اضغط على أيقونة التثبيت في شريط العنوان أعلى المتصفح أو من القائمة اختر <em>تثبيت cutEer</em>.</p>
+          <p><strong style="color:var(--accent);">• على الأندرويد:</strong> اضغط على قائمة المتصفح (⋮) ثم اختر <em>تثبيت التطبيق</em> أو <em>الإضافة إلى الشاشة الرئيسية</em>.</p>
+          <p><strong style="color:var(--accent);">• على الآيفون (Safari):</strong> اضغط زر المشاركة ثم اختر <em>إضافة إلى الصفحة الرئيسية</em>.</p>
+        </div>
       </div>
     </div>
   </div>
